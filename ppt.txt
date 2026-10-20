@@ -1,0 +1,11 @@
+Lo dejé con un largo parecido al original para que quepa en el mismo espacio sin mover los demás bloques.
+
+**Español (hoja 1):**
+
+**Banca (Chile) – Banco Falabella:** Ingeniería de datos en GCP para Loyalty (CMR Puntos) en Chile, Colombia y Perú. Modelado y mantenimiento de entidades en BigQuery, orquestación con Argo Workflows sobre Kubernetes, ingesta en tiempo real con Pub/Sub e integraciones SFTP con proveedores. Monitoreo en Looker Studio, CI/CD en GitHub y herramientas en Python.
+
+**Inglés (hoja 2):**
+
+**Banking (Chile) – Banco Falabella:** GCP data engineering for Loyalty (CMR Puntos) across Chile, Colombia and Peru. BigQuery entity modeling and maintenance, orchestration with Argo Workflows on Kubernetes, real-time ingestion with Pub/Sub, and SFTP integrations with vendors. Monitoring in Looker Studio, CI/CD on GitHub and Python tooling.
+
+Si al pegarlo queda muy justo, puedes quitar "y herramientas en Python" / "and Python tooling" sin perder nada importante.
