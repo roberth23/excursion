@@ -1,14 +1,1 @@
-
-Revisión de parametría de tipo de transacción y medio de pago, Colombia y Perú (17-11-2026).
-
-**Qué se revisó**
-- Conceptos: OBSCONCE y tipo de transacción en PRD (`sfc_tipos_trx`) contra lo acordado con JC.
-- Eventos: medio de pago en PRD (`sfc_tipos_trx_medio_pago`) contra lo aprobado por JC.
-- Casos creados después del OK de JC.
-- Eventos donde el código de aplicación no define el medio de pago.
-
-**Resultado**
-- Colombia: 185 conceptos con OBSCONCE, 160 sin observaciones. Hay 3 casos creados después del OK sin parametrizar (conceptos 00000032 y 00000033 y evento LOYCO003), 5 eventos con medio de pago distinto al aprobado y 22 conceptos con tipo distinto al del SQL actual.
-- Perú: 192 conceptos y 50 eventos. En 17 conceptos el tipo no coincide con su OBSCONCE, porque en Perú el tipo sale de la descripción del concepto. En 19 eventos el medio de pago difiere de lo aprobado. Solo 2 conceptos fueron creados después del OK de JC (00000082 y 00000083) y están alineados a lo acordado.
-
-Con esto se generaron los 2 Excel adjuntos, uno de Colombia y otro de Perú. A continuación se creará la documentación para Operaciones.
+2 tickets nuevos. Partamos por el de revisar impacto (guarda esas queries para correr de nuevo después cuando cerremos el segundo ticket)
