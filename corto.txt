@@ -1,46 +1,23 @@
-
--- 1. Valores que hoy tiene ent_trx_loy
-pais	campo	valor	n
-CO	tipo_transaccion	ACUM-COMPRAS	526269969
-CO	tipo_transaccion	OTROS	129274351
-CO	tipo_transaccion	ACUM-BONIFICACION	66192267
-CO	tipo_transaccion	CANJE	12165497
-CO	trx_mediopago	CMR	291807062
-CO	trx_mediopago	POR IDENTIFICAR	189616170
-CO	trx_mediopago	TMP	133604936
-CO	trx_mediopago	DEB	62658058
-CO	trx_mediopago		56215858
-PE	tipo_transaccion	ACUM-COMPRAS	1119022579
-PE	tipo_transaccion	VENCIMIENTO-PUNTOS	125452587
-PE	tipo_transaccion	OTROS	47340425
-PE	tipo_transaccion	ACUM-BONIFICACION	36821642
-PE	tipo_transaccion	CANJE	23171362
-PE	tipo_transaccion	REVERSAS-PUNTOS	15769749
-PE	tipo_transaccion	REGULARIZACION-PUNTOS	6814563
-PE	tipo_transaccion	CANJE-REVERSAS	329687
-PE	trx_mediopago		387949656
-PE	trx_mediopago	CMR	348639135
-PE	trx_mediopago	TMP	308995657
-PE	trx_mediopago	POR IDENTIFICAR	295833076
-PE	trx_mediopago	DEB	30746004
-PE	trx_mediopago	VI	1247357
-PE	trx_mediopago	EF	473883
-PE	trx_mediopago	VC	310806
-PE	trx_mediopago	01	210278
-PE	trx_mediopago	MA	166155
-PE	trx_mediopago	AM	79670
-PE	trx_mediopago	DI	59457
-PE	trx_mediopago	TV	6544
-PE	trx_mediopago	CO	1966
-PE	trx_mediopago	FM	1566
-PE	trx_mediopago	VA	693
-PE	trx_mediopago	IM	555
-PE	trx_mediopago	VM	106
-PE	trx_mediopago	MM	27
-PE	trx_mediopago	LN	3
-
-
--- 2. Cuántos movimientos encuentran su fila en la tabla maestra (evento + concepto)
-Row	pais	movimientos	con_fila_en_maestra	evento_nulo	evento_vacio
-1	CO	733902084	732464411	59928743	112738409
-2	PE	1374722594	1374512311	355773715	178336052
+WITH co AS (
+  SELECT 'CO' AS pais, COALESCE(TRIM(CODEVENT),'') AS e, TRIM(CODCONCE) AS c, COUNT(*) AS filas, COUNT(DISTINCT CONCAT(TIPO_TRANSACCION,'|',MEDIO_PAGO)) AS valores_distintos
+  FROM `fif-loy-co-datalake-prod.trf_loy_co_master_prd.sfc_tipos_trx_medio_pago`
+  GROUP BY 2, 3
+),
+pe AS (
+  SELECT 'PE' AS pais, COALESCE(TRIM(CODEVENT),'') AS e, TRIM(CODCONCE) AS c, COUNT(*) AS filas, COUNT(DISTINCT CONCAT(TIPO_TRANSACCION,'|',MEDIO_PAGO)) AS valores_distintos
+  FROM `pe-fif-fun-productivo.trf_loy_pe_master_prd.sfc_tipos_trx_medio_pago`
+  GROUP BY 2, 3
+)
+SELECT 'duplicados_en_maestra' AS chk, pais, e AS evento, c AS concepto, filas AS n
+FROM (SELECT * FROM co UNION ALL SELECT * FROM pe) WHERE filas > 1
+UNION ALL
+SELECT 'sin_fila_CO', 'CO', COALESCE(TRIM(t.trx_id_event),''), TRIM(t.trx_id_conc), COUNT(*)
+FROM `fif-loy-co-datalake-prod.trf_loy_co_entities_prd.ent_trx_loy` t
+LEFT JOIN co m ON COALESCE(TRIM(t.trx_id_event),'') = m.e AND TRIM(t.trx_id_conc) = m.c
+WHERE m.c IS NULL GROUP BY 3, 4
+UNION ALL
+SELECT 'sin_fila_PE', 'PE', COALESCE(TRIM(t.TRX_ID_EVENT),''), TRIM(t.TRX_ID_CONC), COUNT(*)
+FROM `pe-fif-fun-productivo.trf_loy_pe_prd.ent_trx_loy` t
+LEFT JOIN pe m ON COALESCE(TRIM(t.TRX_ID_EVENT),'') = m.e AND TRIM(t.TRX_ID_CONC) = m.c
+WHERE m.c IS NULL GROUP BY 3, 4
+ORDER BY 1, 5 DESC;
