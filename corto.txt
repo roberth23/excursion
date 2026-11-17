@@ -1,1 +1,19 @@
-2 tickets nuevos. Partamos por el de revisar impacto (guarda esas queries para correr de nuevo después cuando cerremos el segundo ticket)
+Partimos con el de impacto. Mi idea es esta:
+
+- **Qué compara:** el valor que hoy tiene `ent_trx_loy` (tipo de transacción y medio de pago) contra el valor esperado, que sale de las tablas maestras `sfc_tipos_trx` y `sfc_tipos_trx_medio_pago` cruzadas por evento y concepto. Cuando cerremos el segundo ticket y esas tablas cambien, se vuelven a correr las mismas consultas.
+- **Resultado:** 4 consultas, una de tipo y una de medio de pago por país. Cada una sale por mes, con el valor actual en filas, el esperado en columnas y el porcentaje por fila. Después las juntamos en un solo `.sql`.
+
+Antes de escribirlas necesito los nombres reales de las columnas de `ent_trx_loy` de Colombia y Perú (tipo de transacción, medio de pago, evento, concepto y fecha). Corre esto y pégame el resultado:
+
+```sql
+SELECT 'CO' AS pais, column_name, data_type
+FROM `fif-loy-co-datalake-prod.trf_loy_co_entities_prd.INFORMATION_SCHEMA.COLUMNS`
+WHERE table_name = 'ent_trx_loy'
+UNION ALL
+SELECT 'PE', column_name, data_type
+FROM `pe-fif-fun-productivo.trf_loy_pe_prd.INFORMATION_SCHEMA.COLUMNS`
+WHERE table_name = 'ent_trx_loy'
+ORDER BY 1, 2;
+```
+
+Tengo que preguntarte una cosa, porque cambia el resultado: el "esperado" son las tablas maestras tal como están hoy en PRD, o lo que daría el SQL nuevo del repo (en Colombia el SQL del 2026-06-01 nunca se cargó)? Yo partiría con las tablas de PRD.
