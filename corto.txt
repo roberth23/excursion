@@ -1,84 +1,42 @@
-pais	column_name	data_type
-CO	cli_ident_num	STRING
-CO	cli_ident_type	INT64
-CO	codigo_local	STRING
-CO	desc_local	STRING
-CO	etapa	STRING
-CO	fch_proceso	DATE
-CO	formato	STRING
-CO	loy_codcuent	STRING
-CO	tipo_transaccion	STRING
-CO	trx_cantiart	STRING
-CO	trx_cod_campana	STRING
-CO	trx_codcondi	STRING
-CO	trx_codempre	STRING
-CO	trx_codestad	STRING
-CO	trx_codhisto	STRING
-CO	trx_codpremi	STRING
-CO	trx_codprove	STRING
-CO	trx_desc_canal	STRING
-CO	trx_desc_cond	STRING
-CO	trx_desccpre	STRING
-CO	trx_desprove	STRING
-CO	trx_fch_mov	DATE
-CO	trx_fch_trx_informada	DATE
-CO	trx_feccanje	STRING
-CO	trx_feculest	STRING
-CO	trx_fecvenmv	STRING
-CO	trx_glosa	STRING
-CO	trx_id_canal	STRING
-CO	trx_id_comercio	STRING
-CO	trx_id_conc	STRING
-CO	trx_id_event	STRING
-CO	trx_id_local	STRING
-CO	trx_id_rubro	STRING
-CO	trx_importe	STRING
-CO	trx_mediopago	STRING
-CO	trx_num_mov	INT64
-CO	trx_num_sol	INT64
-CO	trx_punt_obten	INT64
-CO	trx_puntotpr	STRING
-CO	trx_sitactmo	STRING
-CO	trx_tipo_importe	STRING
-CO	trx_txt_extra	STRING
-PE	CLI_IDENT_NUM	STRING
-PE	CLI_IDENT_TYPE	STRING
-PE	CODIGO_LOCAL	STRING
-PE	DESC_LOCAL	STRING
-PE	ETAPA	STRING
-PE	FORMATO	STRING
-PE	LOY_CODCUENT	STRING
-PE	TIPO_TRANSACCION	STRING
-PE	TRX_CANTIART	STRING
-PE	TRX_CODCONDI	STRING
-PE	TRX_CODESTAD	STRING
-PE	TRX_CODHISTO	STRING
-PE	TRX_CODPREMI	STRING
-PE	TRX_CODPROVE	STRING
-PE	TRX_COD_CAMPANA	STRING
-PE	TRX_DESCCPRE	STRING
-PE	TRX_DESC_CANAL	STRING
-PE	TRX_DESC_COND	STRING
-PE	TRX_DESPROVE	STRING
-PE	TRX_FCH_MOV	TIMESTAMP
-PE	TRX_FCH_TRX_INFORMADA	DATE
-PE	TRX_FECCANJE	STRING
-PE	TRX_FECULEST	STRING
-PE	TRX_FECVENMV	STRING
-PE	TRX_GLOSA	STRING
-PE	TRX_ID_CANAL	STRING
-PE	TRX_ID_COMERCIO	STRING
-PE	TRX_ID_CONC	STRING
-PE	TRX_ID_EMPRESA	STRING
-PE	TRX_ID_EVENT	STRING
-PE	TRX_ID_LOCAL	STRING
-PE	TRX_ID_RUBRO	STRING
-PE	TRX_IMPORTE	FLOAT64
-PE	TRX_MEDIOPAGO	STRING
-PE	TRX_NUM_MOV	INT64
-PE	TRX_NUM_SOL	INT64
-PE	TRX_ORIGMOVI	STRING
-PE	TRX_PUNTOTPR	STRING
-PE	TRX_PUNT_OBTEN	INT64
-PE	TRX_TIPO_IMPORTE	STRING
-PE	TRX_TXT_EXTRA	STRING
+Con esas columnas el cruce sería por `trx_id_event` y `trx_id_conc`, el tipo actual es `tipo_transaccion`, el medio actual es `trx_mediopago` y el mes sale de `trx_fch_mov`. Antes de armar las tablas de impacto hay que comprobar dos cosas para no asumirlas: que los valores de `ent_trx_loy` usan los mismos nombres que las tablas maestras, y que el cruce por evento y concepto encuentra a los movimientos (el evento puede venir vacío o con espacios).
+
+Corre estas dos y pégame los resultados:
+
+```sql
+-- 1. Valores que hoy tiene ent_trx_loy
+SELECT 'CO' AS pais, 'tipo_transaccion' AS campo, tipo_transaccion AS valor, COUNT(*) AS n
+FROM `fif-loy-co-datalake-prod.trf_loy_co_entities_prd.ent_trx_loy` GROUP BY 3
+UNION ALL
+SELECT 'CO', 'trx_mediopago', trx_mediopago, COUNT(*)
+FROM `fif-loy-co-datalake-prod.trf_loy_co_entities_prd.ent_trx_loy` GROUP BY 3
+UNION ALL
+SELECT 'PE', 'tipo_transaccion', TIPO_TRANSACCION, COUNT(*)
+FROM `pe-fif-fun-productivo.trf_loy_pe_prd.ent_trx_loy` GROUP BY 3
+UNION ALL
+SELECT 'PE', 'trx_mediopago', TRX_MEDIOPAGO, COUNT(*)
+FROM `pe-fif-fun-productivo.trf_loy_pe_prd.ent_trx_loy` GROUP BY 3
+ORDER BY 1, 2, 4 DESC;
+```
+
+```sql
+-- 2. Cuántos movimientos encuentran su fila en la tabla maestra (evento + concepto)
+WITH m_co AS (
+  SELECT DISTINCT COALESCE(TRIM(CODEVENT),'') AS e, TRIM(CODCONCE) AS c
+  FROM `fif-loy-co-datalake-prod.trf_loy_co_master_prd.sfc_tipos_trx_medio_pago`
+),
+m_pe AS (
+  SELECT DISTINCT COALESCE(TRIM(CODEVENT),'') AS e, TRIM(CODCONCE) AS c
+  FROM `pe-fif-fun-productivo.trf_loy_pe_master_prd.sfc_tipos_trx_medio_pago`
+)
+SELECT 'CO' AS pais, COUNT(*) AS movimientos, COUNTIF(m.c IS NOT NULL) AS con_fila_en_maestra,
+       COUNTIF(t.trx_id_event IS NULL) AS evento_nulo, COUNTIF(TRIM(t.trx_id_event) = '') AS evento_vacio
+FROM `fif-loy-co-datalake-prod.trf_loy_co_entities_prd.ent_trx_loy` t
+LEFT JOIN m_co m ON COALESCE(TRIM(t.trx_id_event),'') = m.e AND TRIM(t.trx_id_conc) = m.c
+UNION ALL
+SELECT 'PE', COUNT(*), COUNTIF(m.c IS NOT NULL),
+       COUNTIF(t.TRX_ID_EVENT IS NULL), COUNTIF(TRIM(t.TRX_ID_EVENT) = '')
+FROM `pe-fif-fun-productivo.trf_loy_pe_prd.ent_trx_loy` t
+LEFT JOIN m_pe m ON COALESCE(TRIM(t.TRX_ID_EVENT),'') = m.e AND TRIM(t.TRX_ID_CONC) = m.c;
+```
+
+Las dos leen toda la historia de `ent_trx_loy`, así que pueden tardar. Con esos resultados escribo las tablas de impacto por mes.
