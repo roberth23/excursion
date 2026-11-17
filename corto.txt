@@ -1,42 +1,46 @@
-Con esas columnas el cruce sería por `trx_id_event` y `trx_id_conc`, el tipo actual es `tipo_transaccion`, el medio actual es `trx_mediopago` y el mes sale de `trx_fch_mov`. Antes de armar las tablas de impacto hay que comprobar dos cosas para no asumirlas: que los valores de `ent_trx_loy` usan los mismos nombres que las tablas maestras, y que el cruce por evento y concepto encuentra a los movimientos (el evento puede venir vacío o con espacios).
 
-Corre estas dos y pégame los resultados:
-
-```sql
 -- 1. Valores que hoy tiene ent_trx_loy
-SELECT 'CO' AS pais, 'tipo_transaccion' AS campo, tipo_transaccion AS valor, COUNT(*) AS n
-FROM `fif-loy-co-datalake-prod.trf_loy_co_entities_prd.ent_trx_loy` GROUP BY 3
-UNION ALL
-SELECT 'CO', 'trx_mediopago', trx_mediopago, COUNT(*)
-FROM `fif-loy-co-datalake-prod.trf_loy_co_entities_prd.ent_trx_loy` GROUP BY 3
-UNION ALL
-SELECT 'PE', 'tipo_transaccion', TIPO_TRANSACCION, COUNT(*)
-FROM `pe-fif-fun-productivo.trf_loy_pe_prd.ent_trx_loy` GROUP BY 3
-UNION ALL
-SELECT 'PE', 'trx_mediopago', TRX_MEDIOPAGO, COUNT(*)
-FROM `pe-fif-fun-productivo.trf_loy_pe_prd.ent_trx_loy` GROUP BY 3
-ORDER BY 1, 2, 4 DESC;
-```
+pais	campo	valor	n
+CO	tipo_transaccion	ACUM-COMPRAS	526269969
+CO	tipo_transaccion	OTROS	129274351
+CO	tipo_transaccion	ACUM-BONIFICACION	66192267
+CO	tipo_transaccion	CANJE	12165497
+CO	trx_mediopago	CMR	291807062
+CO	trx_mediopago	POR IDENTIFICAR	189616170
+CO	trx_mediopago	TMP	133604936
+CO	trx_mediopago	DEB	62658058
+CO	trx_mediopago		56215858
+PE	tipo_transaccion	ACUM-COMPRAS	1119022579
+PE	tipo_transaccion	VENCIMIENTO-PUNTOS	125452587
+PE	tipo_transaccion	OTROS	47340425
+PE	tipo_transaccion	ACUM-BONIFICACION	36821642
+PE	tipo_transaccion	CANJE	23171362
+PE	tipo_transaccion	REVERSAS-PUNTOS	15769749
+PE	tipo_transaccion	REGULARIZACION-PUNTOS	6814563
+PE	tipo_transaccion	CANJE-REVERSAS	329687
+PE	trx_mediopago		387949656
+PE	trx_mediopago	CMR	348639135
+PE	trx_mediopago	TMP	308995657
+PE	trx_mediopago	POR IDENTIFICAR	295833076
+PE	trx_mediopago	DEB	30746004
+PE	trx_mediopago	VI	1247357
+PE	trx_mediopago	EF	473883
+PE	trx_mediopago	VC	310806
+PE	trx_mediopago	01	210278
+PE	trx_mediopago	MA	166155
+PE	trx_mediopago	AM	79670
+PE	trx_mediopago	DI	59457
+PE	trx_mediopago	TV	6544
+PE	trx_mediopago	CO	1966
+PE	trx_mediopago	FM	1566
+PE	trx_mediopago	VA	693
+PE	trx_mediopago	IM	555
+PE	trx_mediopago	VM	106
+PE	trx_mediopago	MM	27
+PE	trx_mediopago	LN	3
 
-```sql
+
 -- 2. Cuántos movimientos encuentran su fila en la tabla maestra (evento + concepto)
-WITH m_co AS (
-  SELECT DISTINCT COALESCE(TRIM(CODEVENT),'') AS e, TRIM(CODCONCE) AS c
-  FROM `fif-loy-co-datalake-prod.trf_loy_co_master_prd.sfc_tipos_trx_medio_pago`
-),
-m_pe AS (
-  SELECT DISTINCT COALESCE(TRIM(CODEVENT),'') AS e, TRIM(CODCONCE) AS c
-  FROM `pe-fif-fun-productivo.trf_loy_pe_master_prd.sfc_tipos_trx_medio_pago`
-)
-SELECT 'CO' AS pais, COUNT(*) AS movimientos, COUNTIF(m.c IS NOT NULL) AS con_fila_en_maestra,
-       COUNTIF(t.trx_id_event IS NULL) AS evento_nulo, COUNTIF(TRIM(t.trx_id_event) = '') AS evento_vacio
-FROM `fif-loy-co-datalake-prod.trf_loy_co_entities_prd.ent_trx_loy` t
-LEFT JOIN m_co m ON COALESCE(TRIM(t.trx_id_event),'') = m.e AND TRIM(t.trx_id_conc) = m.c
-UNION ALL
-SELECT 'PE', COUNT(*), COUNTIF(m.c IS NOT NULL),
-       COUNTIF(t.TRX_ID_EVENT IS NULL), COUNTIF(TRIM(t.TRX_ID_EVENT) = '')
-FROM `pe-fif-fun-productivo.trf_loy_pe_prd.ent_trx_loy` t
-LEFT JOIN m_pe m ON COALESCE(TRIM(t.TRX_ID_EVENT),'') = m.e AND TRIM(t.TRX_ID_CONC) = m.c;
-```
-
-Las dos leen toda la historia de `ent_trx_loy`, así que pueden tardar. Con esos resultados escribo las tablas de impacto por mes.
+Row	pais	movimientos	con_fila_en_maestra	evento_nulo	evento_vacio
+1	CO	733902084	732464411	59928743	112738409
+2	PE	1374722594	1374512311	355773715	178336052
