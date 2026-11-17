@@ -1,19 +1,84 @@
-Partimos con el de impacto. Mi idea es esta:
-
-- **Qué compara:** el valor que hoy tiene `ent_trx_loy` (tipo de transacción y medio de pago) contra el valor esperado, que sale de las tablas maestras `sfc_tipos_trx` y `sfc_tipos_trx_medio_pago` cruzadas por evento y concepto. Cuando cerremos el segundo ticket y esas tablas cambien, se vuelven a correr las mismas consultas.
-- **Resultado:** 4 consultas, una de tipo y una de medio de pago por país. Cada una sale por mes, con el valor actual en filas, el esperado en columnas y el porcentaje por fila. Después las juntamos en un solo `.sql`.
-
-Antes de escribirlas necesito los nombres reales de las columnas de `ent_trx_loy` de Colombia y Perú (tipo de transacción, medio de pago, evento, concepto y fecha). Corre esto y pégame el resultado:
-
-```sql
-SELECT 'CO' AS pais, column_name, data_type
-FROM `fif-loy-co-datalake-prod.trf_loy_co_entities_prd.INFORMATION_SCHEMA.COLUMNS`
-WHERE table_name = 'ent_trx_loy'
-UNION ALL
-SELECT 'PE', column_name, data_type
-FROM `pe-fif-fun-productivo.trf_loy_pe_prd.INFORMATION_SCHEMA.COLUMNS`
-WHERE table_name = 'ent_trx_loy'
-ORDER BY 1, 2;
-```
-
-Tengo que preguntarte una cosa, porque cambia el resultado: el "esperado" son las tablas maestras tal como están hoy en PRD, o lo que daría el SQL nuevo del repo (en Colombia el SQL del 2026-06-01 nunca se cargó)? Yo partiría con las tablas de PRD.
+pais	column_name	data_type
+CO	cli_ident_num	STRING
+CO	cli_ident_type	INT64
+CO	codigo_local	STRING
+CO	desc_local	STRING
+CO	etapa	STRING
+CO	fch_proceso	DATE
+CO	formato	STRING
+CO	loy_codcuent	STRING
+CO	tipo_transaccion	STRING
+CO	trx_cantiart	STRING
+CO	trx_cod_campana	STRING
+CO	trx_codcondi	STRING
+CO	trx_codempre	STRING
+CO	trx_codestad	STRING
+CO	trx_codhisto	STRING
+CO	trx_codpremi	STRING
+CO	trx_codprove	STRING
+CO	trx_desc_canal	STRING
+CO	trx_desc_cond	STRING
+CO	trx_desccpre	STRING
+CO	trx_desprove	STRING
+CO	trx_fch_mov	DATE
+CO	trx_fch_trx_informada	DATE
+CO	trx_feccanje	STRING
+CO	trx_feculest	STRING
+CO	trx_fecvenmv	STRING
+CO	trx_glosa	STRING
+CO	trx_id_canal	STRING
+CO	trx_id_comercio	STRING
+CO	trx_id_conc	STRING
+CO	trx_id_event	STRING
+CO	trx_id_local	STRING
+CO	trx_id_rubro	STRING
+CO	trx_importe	STRING
+CO	trx_mediopago	STRING
+CO	trx_num_mov	INT64
+CO	trx_num_sol	INT64
+CO	trx_punt_obten	INT64
+CO	trx_puntotpr	STRING
+CO	trx_sitactmo	STRING
+CO	trx_tipo_importe	STRING
+CO	trx_txt_extra	STRING
+PE	CLI_IDENT_NUM	STRING
+PE	CLI_IDENT_TYPE	STRING
+PE	CODIGO_LOCAL	STRING
+PE	DESC_LOCAL	STRING
+PE	ETAPA	STRING
+PE	FORMATO	STRING
+PE	LOY_CODCUENT	STRING
+PE	TIPO_TRANSACCION	STRING
+PE	TRX_CANTIART	STRING
+PE	TRX_CODCONDI	STRING
+PE	TRX_CODESTAD	STRING
+PE	TRX_CODHISTO	STRING
+PE	TRX_CODPREMI	STRING
+PE	TRX_CODPROVE	STRING
+PE	TRX_COD_CAMPANA	STRING
+PE	TRX_DESCCPRE	STRING
+PE	TRX_DESC_CANAL	STRING
+PE	TRX_DESC_COND	STRING
+PE	TRX_DESPROVE	STRING
+PE	TRX_FCH_MOV	TIMESTAMP
+PE	TRX_FCH_TRX_INFORMADA	DATE
+PE	TRX_FECCANJE	STRING
+PE	TRX_FECULEST	STRING
+PE	TRX_FECVENMV	STRING
+PE	TRX_GLOSA	STRING
+PE	TRX_ID_CANAL	STRING
+PE	TRX_ID_COMERCIO	STRING
+PE	TRX_ID_CONC	STRING
+PE	TRX_ID_EMPRESA	STRING
+PE	TRX_ID_EVENT	STRING
+PE	TRX_ID_LOCAL	STRING
+PE	TRX_ID_RUBRO	STRING
+PE	TRX_IMPORTE	FLOAT64
+PE	TRX_MEDIOPAGO	STRING
+PE	TRX_NUM_MOV	INT64
+PE	TRX_NUM_SOL	INT64
+PE	TRX_ORIGMOVI	STRING
+PE	TRX_PUNTOTPR	STRING
+PE	TRX_PUNT_OBTEN	INT64
+PE	TRX_TIPO_IMPORTE	STRING
+PE	TRX_TXT_EXTRA	STRING
