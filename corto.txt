@@ -1,23 +1,37 @@
-WITH co AS (
-  SELECT 'CO' AS pais, COALESCE(TRIM(CODEVENT),'') AS e, TRIM(CODCONCE) AS c, COUNT(*) AS filas, COUNT(DISTINCT CONCAT(TIPO_TRANSACCION,'|',MEDIO_PAGO)) AS valores_distintos
-  FROM `fif-loy-co-datalake-prod.trf_loy_co_master_prd.sfc_tipos_trx_medio_pago`
-  GROUP BY 2, 3
-),
-pe AS (
-  SELECT 'PE' AS pais, COALESCE(TRIM(CODEVENT),'') AS e, TRIM(CODCONCE) AS c, COUNT(*) AS filas, COUNT(DISTINCT CONCAT(TIPO_TRANSACCION,'|',MEDIO_PAGO)) AS valores_distintos
-  FROM `pe-fif-fun-productivo.trf_loy_pe_master_prd.sfc_tipos_trx_medio_pago`
-  GROUP BY 2, 3
-)
-SELECT 'duplicados_en_maestra' AS chk, pais, e AS evento, c AS concepto, filas AS n
-FROM (SELECT * FROM co UNION ALL SELECT * FROM pe) WHERE filas > 1
-UNION ALL
-SELECT 'sin_fila_CO', 'CO', COALESCE(TRIM(t.trx_id_event),''), TRIM(t.trx_id_conc), COUNT(*)
-FROM `fif-loy-co-datalake-prod.trf_loy_co_entities_prd.ent_trx_loy` t
-LEFT JOIN co m ON COALESCE(TRIM(t.trx_id_event),'') = m.e AND TRIM(t.trx_id_conc) = m.c
-WHERE m.c IS NULL GROUP BY 3, 4
-UNION ALL
-SELECT 'sin_fila_PE', 'PE', COALESCE(TRIM(t.TRX_ID_EVENT),''), TRIM(t.TRX_ID_CONC), COUNT(*)
-FROM `pe-fif-fun-productivo.trf_loy_pe_prd.ent_trx_loy` t
-LEFT JOIN pe m ON COALESCE(TRIM(t.TRX_ID_EVENT),'') = m.e AND TRIM(t.TRX_ID_CONC) = m.c
-WHERE m.c IS NULL GROUP BY 3, 4
-ORDER BY 1, 5 DESC;
+chk	pais	evento	concepto	n
+sin_fila_CO	CO			1203200
+sin_fila_CO	CO	00000002	00000057	66476
+sin_fila_CO	CO	00000002	00000063	50259
+sin_fila_CO	CO	SODPE001	00000096	20396
+sin_fila_CO	CO	00000002	00000058	18617
+sin_fila_CO	CO	00000002	00000064	17061
+sin_fila_CO	CO	TOTPE001	00000098	16095
+sin_fila_CO	CO	00000002	00000053	7858
+sin_fila_CO	CO	FALPE001	00000097	7548
+sin_fila_CO	CO	00000002	00000065	6068
+sin_fila_CO	CO	00000002	00000059	5425
+sin_fila_CO	CO	LINPE001	00000102	3325
+sin_fila_CO	CO	00000002	00000050	2805
+sin_fila_CO	CO	00000002	00000060	2493
+sin_fila_CO	CO	FALPE001	00000100	2317
+sin_fila_CO	CO	TOTPE001	00000101	2095
+sin_fila_CO	CO	SODPE001	00000099	1567
+sin_fila_CO	CO	00000002	00000066	1056
+sin_fila_CO	CO	LINPE001	00000103	931
+sin_fila_CO	CO	00000002	00000061	834
+sin_fila_CO	CO	00000001	00000176	453
+sin_fila_CO	CO	00000002	00000067	348
+sin_fila_CO	CO	00000002	00000062	228
+sin_fila_CO	CO	00000002	00000068	109
+sin_fila_CO	CO	REDCO001	00000172	62
+sin_fila_CO	CO	00000002	00000051	24
+sin_fila_CO	CO	REDCO001	00000170	12
+sin_fila_CO	CO	REDCO001	00000174	8
+sin_fila_CO	CO	REDCO001	00000173	3
+sin_fila_PE	PE	LINPE001	00000102	193160
+sin_fila_PE	PE	LINPE001	00000103	17118
+sin_fila_PE	PE	SODPE003	00000162	1
+sin_fila_PE	PE	00000002A	00000063	1
+sin_fila_PE	PE	LINPE003	00000163	1
+sin_fila_PE	PE	TOTPE003	00000152	1
+sin_fila_PE	PE	TOTPE003	00000160	1
